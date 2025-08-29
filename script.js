@@ -1,14 +1,14 @@
 // Sample data for emergency services
 const services = [
-  { id: 1, name: 'National Emergency Number', nameEn: 'National Emergency', number: '999', category: 'All', icon: 'assets/emergency.png' },
-  { id: 2, name: 'Police Helpline Number', nameEn: 'Police', number: '999', category: 'Police', icon: 'assets/police.png' },
-  { id: 3, name: 'Fire Service Number', nameEn: 'Fire Service', number: '999', category: 'Fire', icon: 'assets/fire-service.png' },
-  { id: 4, name: 'Ambulance Service', nameEn: 'Ambulance', number: '1994-999999', category: 'Health', icon: 'assets/ambulance.png' },
+  { id: 1, name: 'National Emergency', nameEn: 'National Emergency', number: '999', category: 'All', icon: 'assets/emergency.png' },
+  { id: 2, name: 'Police', nameEn: 'Police', number: '999', category: 'Police', icon: 'assets/police.png' },
+  { id: 3, name: 'Fire Service', nameEn: 'Fire Service', number: '999', category: 'Fire', icon: 'assets/fire-service.png' },
+  { id: 4, name: 'Ambulance', nameEn: 'Ambulance', number: '1994-999999', category: 'Health', icon: 'assets/ambulance.png' },
   { id: 5, name: 'Women & Child Helpline', nameEn: 'Women & Child Helpline', number: '109', category: 'Help', icon: 'assets/emergency.png' },
-  { id: 6, name: 'Anti-Corruption Helpline', nameEn: 'Anti-Corruption', number: '106', category: 'Govt.', icon: 'assets/emergency.png' },
+  { id: 6, name: 'Anti-Corruption', nameEn: 'Anti-Corruption', number: '106', category: 'Govt.', icon: 'assets/emergency.png' },
   { id: 7, name: 'Electricity Outage', nameEn: 'Electricity Outage', number: '16216', category: 'Electricity', icon: 'assets/emergency.png' },
-  { id: 8, name: 'Brac Helpline', nameEn: 'Brac', number: '16445', category: 'NGO', icon: 'assets/brac.png' },
-  { id: 9, name: 'Bangladesh Railway Helpline', nameEn: 'Bangladesh Railway', number: '163', category: 'Travel', icon: 'assets/Bangladesh-Railway.png' }
+  { id: 8, name: 'Brac', nameEn: 'Brac', number: '16445', category: 'NGO', icon: 'assets/brac.png' },
+  { id: 9, name: 'Bangladesh Railway', nameEn: 'Bangladesh Railway', number: '163', category: 'Travel', icon: 'assets/Bangladesh-Railway.png' }
 ];
 
 // DOM Elements
@@ -30,6 +30,9 @@ function init() {
   renderCards();
   updateStats();
   clearHistoryBtn.addEventListener('click', clearHistory);
+
+  // Delegate click events (for dynamic elements)
+  document.addEventListener('click', onGlobalClick);
 }
 
 // Render service cards
@@ -40,6 +43,11 @@ function renderCards() {
     card.className = 'card';
     card.innerHTML = `
       <div class="card-content">
+        <!-- Simple heart icon without background, larger size -->
+        <button class="heart-btn" data-id="${service.id}" aria-label="Like">
+          <i class="fa-regular fa-heart"></i>
+        </button>
+
         <img src="${service.icon}" alt="${service.name}" class="service-icon">
         <h3 class="service-name">${service.name}</h3>
         <p class="service-name-en">${service.nameEn}</p>
@@ -56,26 +64,52 @@ function renderCards() {
       </div>`;
     cardContainer.appendChild(card);
   });
-  addCardEventListeners();
 }
 
-// Add event listeners
-function addCardEventListeners() {
-  document.querySelectorAll('.btn-copy').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const number = this.getAttribute('data-number');
-      copyNumber(number);
-    });
-  });
+// Global click handler (for copy/call/heart)
+function onGlobalClick(e) {
+  // Copy number
+  const copyBtn = e.target.closest('.btn-copy');
+  if (copyBtn) {
+    const number = copyBtn.getAttribute('data-number');
+    copyNumber(number);
+    return;
+  }
 
-  document.querySelectorAll('.btn-call').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const id = this.getAttribute('data-id');
-      const name = this.getAttribute('data-name');
-      const number = this.getAttribute('data-number');
-      callService(id, name, number);
-    });
-  });
+  // Call service
+  const callBtn = e.target.closest('.btn-call');
+  if (callBtn) {
+    const id = callBtn.getAttribute('data-id');
+    const name = callBtn.getAttribute('data-name');
+    const number = callBtn.getAttribute('data-number');
+    callService(id, name, number);
+    return;
+  }
+
+  // Heart toggle
+  const heartBtn = e.target.closest('.heart-btn');
+  if (heartBtn) {
+    toggleHeart(heartBtn);
+    return;
+  }
+}
+
+// Toggle heart state and update header count
+function toggleHeart(btn) {
+  const icon = btn.querySelector('i');
+
+  if (btn.classList.contains('liked')) {
+    btn.classList.remove('liked');
+    icon.classList.remove('fa-solid');
+    icon.classList.add('fa-regular');
+    heartCount = Math.max(0, heartCount - 1);
+  } else {
+    btn.classList.add('liked');
+    icon.classList.remove('fa-regular');
+    icon.classList.add('fa-solid');
+    heartCount += 1;
+  }
+  updateStats();
 }
 
 // Copy number
@@ -130,7 +164,7 @@ function clearHistory() {
   updateCallHistory();
 }
 
-// Update stats
+// Update stats (top bar)
 function updateStats() {
   heartCountElement.textContent = heartCount;
   coinCountElement.textContent = coinCount;
